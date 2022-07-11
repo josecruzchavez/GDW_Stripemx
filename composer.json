@@ -9,10 +9,7 @@
         "magento 2 module", "stripe", "MSI", "stripe msi"
     ],
     "homepage": "https://gestiondigitalweb.com/downloads/cobrar-con-stripe-a-meses-sin-intereses-mexico",
-    "license": [
-        "https://stripe.com/magento/legal",
-        "https://gestiondigitalweb.com/modulos/legal"
-    ],
+    "license": "proprietary",
     "authors": [
         {
             "name": "José Cruz Chávez",
