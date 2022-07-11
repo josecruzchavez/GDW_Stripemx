@@ -2,7 +2,7 @@
     "name": "gdw/stripemx",
     "description": "Metodo de pago online para magento 2",
     "type": "magento2-module",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "keywords": [
         "magento", "magento2 extension",
         "magento 2 extension", "extension", "module", "magento2 module",
@@ -26,7 +26,7 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "GDW/Core": "^1",
+        "gdw/core": "^2",
         "stripe/stripe-php": "^7"
     },
     "autoload": {
