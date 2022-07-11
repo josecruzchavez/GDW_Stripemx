@@ -1,0 +1,19 @@
+.stripemx-container .toolbar {display:none;}
+.stripemx-container #stripemx-plans {display:none;}
+.stripemx-container #stripemx-payment-form {transition:all 0.5s;}
+.stripemx-container .StripeElement::placeholder {font-weight:400;}
+.stripemx-container .StripeElement--invalid { border-color: #fa755a;}
+.stripemx-container .StripeElement--focus { box-shadow: 0 1px 3px 0 #cfd7df;}
+.stripemx-container .StripeElement--webkit-autofill { background-color: #fefde5 !important;}
+
+.stripemx-container .StripeElement { box-sizing: border-box; height: 40px; padding: 10px 12px; font-weight:400;
+border: 1px solid transparent; border-radius: 4px; background-color: white; margin-bottom: 15px;
+box-shadow: 0 1px 3px 0 #e6ebf1; -webkit-transition: box-shadow 150ms ease; transition: box-shadow 150ms ease;}
+
+.stripemx-container #stripemx-card-button { box-sizing: border-box; height: 40px; padding: 10px 12px; border: 1px solid transparent;
+border-radius: 4px; background-color: #26416a; margin-bottom: 15px; box-shadow: 0 1px 3px 0 #e6ebf1; color: white;
+-webkit-transition: box-shadow 150ms ease; transition: box-shadow 150ms ease; line-height: 14px !important;}
+
+.stripemx-container #stripemx-status-message { background: red; box-sizing: border-box; height: 40px; padding: 10px 12px;
+font-weight: 400; border: 1px solid transparent; border-radius: 4px; background-color: #ff2b2b; margin-bottom: 15px; display:none;
+box-shadow: 0 1px 3px 0 #e6ebf1; -webkit-transition: box-shadow 150ms ease; transition: box-shadow 150ms ease; color: white;}

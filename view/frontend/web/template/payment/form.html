@@ -1,0 +1,68 @@
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+    <div class="payment-method-title field choice">
+        <input type="radio" name="payment[method]" class="radio"
+            data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()" />
+        <label data-bind="attr: {'for': getCode()}" class="label">
+        <span data-bind="text: getTitle()"></span></label>
+    </div>
+
+    <div class="payment-method-content">
+      <div class="stripemx-container">
+
+        <!-- ko foreach: getRegion('messages') --><!-- ko template: getTemplate() -->
+        <!-- /ko --><!--/ko-->
+            
+        <div id="stripemx-result"><p id="stripemx-status-message"></p></div>
+            
+        <div class="payment-method-billing-address">
+            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+            <!-- ko template: getTemplate() -->
+            <!-- /ko -->
+            <!--/ko-->
+        </div>
+
+        <div id="stripemx-details">
+             <!-- ko if: note() -->
+            <div class="note" data-bind="i18n: note()"></div>
+            <!--/ko-->
+            <input id="stripemx-cardholder-name" type="text" class="StripeElement" placeholder="Titular de la tarjeta" />
+            <!-- placeholder for Elements -->
+            <form id="stripemx-payment-form">
+                <div id="stripemx-card-element"></div>
+                <button id="stripemx-card-button" data-bind="event:{click: checkMSI}">Revisar Tarjeta</button>
+            </form>
+        </div>
+
+        <div id="stripemx-plans">
+            <form id="installment-plan-form">
+                <div class="note" data-bind="i18n: notemsi()"></div>
+                <select class="StripeElement" id="selected_plan" name="selected_plan">
+                    <option value="0" data-val="unico">Un solo pago</option>
+                </select>
+                <input id="payment-intent-id" type="hidden" />
+            </form>
+        </div>
+
+        <div class="checkout-agreements-block">
+            <!-- ko foreach: $parent.getRegion('before-place-order') -->
+            <!-- ko template: getTemplate() -->
+            <!-- /ko -->
+            <!--/ko-->
+        </div>
+        
+        <div class="toolbar"><div class="actions-toolbar">
+            <div class="secondary">
+                <button class="action primary stripemx-back-button" type="input" data-bind="click: cleanCard, attr: {title: $t('Back')}">
+                    <span data-bind="i18n: 'Otra tarjeta'"></span>
+                </button>
+            </div>
+            <div class="primary">
+                <button class="action primary checkout stripemx-confirm-button" type="submit" data-bind="click: placeOrder, attr: {title: $t('Place Orcer')}">
+                    <span data-bind="i18n: 'Place Order'"></span>
+                </button>
+            </div>
+        </div></div>
+
+      </div>
+    </div>
+</div>

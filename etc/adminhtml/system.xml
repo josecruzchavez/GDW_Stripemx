@@ -1,0 +1,93 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+	<system>
+		<section id="payment" showInDefault="1" showInStore="1" showInWebsite="1" translate="label">
+			<group id="gdw_stripemx" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="50" translate="label">
+				<label>GDW Stripe MSI</label>
+
+				<field id="active" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="1" translate="label" type="select">
+					<label>Enabled</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+
+				<field id="title" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="2" translate="label" type="text">
+					<label>Title</label>
+					<validate>required-entry</validate>
+				</field>
+
+				<field id="sandbox_mode" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="7" translate="label" type="select">
+					<label>Sandbox Mode</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+
+				<field id="key_public_sandbox" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Key Public Sandbox</label>
+					<depends>
+						<field id="sandbox_mode">1</field>
+					</depends>
+					<validate>required-entry</validate>
+					<comment>Get Sandbox Keys: https://dashboard.stripe.com/test/apikeys</comment>
+				</field>
+
+				<field id="key_secret_sandbox" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="9" translate="label" type="obscure">
+					<label>Key Secret Sandbox</label>
+					<backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+					<depends>
+						<field id="sandbox_mode">1</field>
+					</depends>
+					<validate>required-entry</validate>
+				</field>
+
+				<field id="key_public_live" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Key Public Live</label>
+					<depends>
+						<field id="sandbox_mode">0</field>
+					</depends>
+					<validate>required-entry</validate>
+					<comment>Get Live Keys: https://dashboard.stripe.com/apikeys</comment>
+				</field>
+
+				<field id="key_secret_live" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="11" translate="label" type="obscure">
+					<label>Key Secret Live</label>
+					<backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+					<depends>
+						<field id="sandbox_mode">0</field>
+					</depends>
+					<validate>required-entry</validate>
+				</field>
+
+				<field id="payment_limit" translate="label" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+					<label>Quota Limit</label>
+					<source_model>GDW\Stripemx\Model\Adminhtml\Source\PaymentLimit</source_model>
+					<comment>Select quota that can be selected if applicable</comment>
+					<validate>required-entry</validate>
+				</field>
+
+				<field id="note" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="31" translate="label" type="textarea">
+					<label>Note in checkout</label>
+				</field>
+
+				<field id="note_msi" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="31" translate="label" type="textarea">
+					<label>Note in field MSI</label>
+				</field>
+
+				<field id="sort_order" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="33" translate="label" type="text">
+					<label>Sort Order</label>
+				</field>
+
+				<field id="debug" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="34" translate="label" type="select">
+					<label>Enable Debug</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+				<field id="global_error_show" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="36" translate="label" type="text">
+					<label>Global Error</label>
+					<comment>If not Empty, this message show in checkout on all payment error</comment>
+				</field>
+				<field id="stripe_script" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="37" translate="label" type="textarea">
+					<label>Custom CSS and JS</label>
+					<comment>If not Empty, this code append head in checkout</comment>
+				</field>
+			</group>
+		</section>
+	</system>
+</config>
