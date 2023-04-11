@@ -64,8 +64,8 @@ php bin/magento cache:flush
 
 ### Otros enlaces
 
-* [ Sitio web](https://gestiondigitalweb.com/?utm_source=github&utm_medium=gdw&utm_campaign=opengraph&utm_id=link)
-* [Listado de Módulos](https://gestiondigitalweb.com/gdw-modulos/index.php)
+* [ Sitio web](https://gdw.mx/?utm_source=github&utm_medium=gdw&utm_campaign=stripemx&utm_id=link)
+* [Listado de Módulos](https://gdw.mx/modulos)
 * [Facebook](https://www.facebook.com/GestionDigitalWeb)
 * [Youtube](https://www.youtube.com/c/Gestiondigitalweb)
  

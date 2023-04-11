@@ -1,7 +1,3 @@
 <?php
-
-\Magento\Framework\Component\ComponentRegistrar::register(
-    \Magento\Framework\Component\ComponentRegistrar::MODULE,
-    'GDW_Stripemx',
-    isset($file) ? dirname($file) : __DIR__
-);
+use Magento\Framework\Component\ComponentRegistrar;
+ComponentRegistrar::register(ComponentRegistrar::MODULE, 'GDW_Stripemx', __DIR__);

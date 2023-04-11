@@ -7,7 +7,7 @@
 
     <body>
         <referenceBlock name="head.additional">
-			<block class="GDW\Stripemx\Block\CustomHeader" name="gdw.stripemx.header" template="GDW_Stripemx::custom_script.phtml"/>
+			<block class="GDW\Stripemx\Block\CustomHeader" name="gdw_stripemx_header" template="GDW_Stripemx::custom_script.phtml"/>
         </referenceBlock>
 
         <referenceBlock name="checkout.root">
