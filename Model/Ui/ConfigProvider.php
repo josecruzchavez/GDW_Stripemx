@@ -17,7 +17,9 @@ class ConfigProvider implements ConfigProviderInterface
         'mastercard' => 'Mastercard'
     ];
 
+    protected $ccConfig;
     protected $stripemx;
+    protected $assetSource;
 
     public function __construct(
         CcConfig $ccConfig,
