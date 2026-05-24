@@ -28,7 +28,7 @@
     "require": {
         "gdw/core": "^4.0",
         "php": "^7.4||^8.1",
-        "stripe/stripe-php": "^7"
+        "stripe/stripe-php": "20.1.0"
     },
     "autoload": {
         "psr-4": {

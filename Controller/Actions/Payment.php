@@ -76,9 +76,10 @@ class Payment extends \Magento\Framework\App\Action\Action
 
             $iniPlans = $intent->payment_method_options->card->installments->available_plans;
 
-
             if(!empty($iniPlans)){
                 $iniPlans = $this->getCoutas($iniPlans);
+            } elseif ($this->stripemx->sandbox()) {
+                $iniPlans = $this->getDemoCoutas();
             }
 
             return $resultJson->setData(['intent_id' => $intent->id, 'available_plans' => $iniPlans]);
@@ -110,5 +111,26 @@ class Payment extends \Magento\Framework\App\Action\Action
             }
         }
         return $iniPlans;
+    }
+
+    protected function getDemoCoutas()
+    {
+        $plans = [];
+        $enableCoutas = explode(',', (string) $this->stripemx->getCoutas());
+
+        foreach ($enableCoutas as $count) {
+            $count = (int) trim($count);
+            if ($count <= 0) {
+                continue;
+            }
+
+            $plan = new \stdClass();
+            $plan->count = $count;
+            $plan->interval = 'month';
+            $plan->type = 'fixed_count';
+            $plans[] = $plan;
+        }
+
+        return $plans;
     }
 }
