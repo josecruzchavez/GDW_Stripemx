@@ -5,7 +5,7 @@ use \GDW\Stripemx\Model\StripemxCard;
 use \Magento\Framework\App\Request\Http;
 use \Magento\Framework\App\Action\Context;
 use \Magento\Framework\View\Result\PageFactory;
-use \Magento\Framework\Controller\Result\Redirect;
+use \Magento\Framework\Controller\Result\RedirectFactory;
 use \Magento\Framework\Controller\Result\JsonFactory;
 
 class Payment extends \Magento\Framework\App\Action\Action
@@ -22,21 +22,21 @@ class Payment extends \Magento\Framework\App\Action\Action
         StripemxCard $stripemx,
         PageFactory $pageFactory,
         JsonFactory $resultJsonFactory,
-        Redirect $resultRedirectFactory
+        RedirectFactory $resultRedirectFactory
         ){
         $this->request = $request;
         $this->stripemx = $stripemx;
         $this->pageFactory = $pageFactory;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->resultRedirectFactory = $resultRedirectFactory;
-        return parent::__construct($context);
+        parent::__construct($context);
         
     }
 
     public function execute()
     {
         /* return $this->process(); */
-        if ($this->getRequest()->isPost()) {
+        if ($this->request->isPost()) {
             return $this->process();
         } else {
             $resultRedirect = $this->resultRedirectFactory->create();
@@ -54,7 +54,7 @@ class Payment extends \Magento\Framework\App\Action\Action
 
             $const = [];
             $const['payment_method'] = $data['payment']['paymentMethod']['id'];
-            $const['amount'] = number_format($data['totals']['base_grand_total'], 2, '', '');
+            $const['amount'] = (int) round(((float) $data['totals']['base_grand_total']) * 100);
             $const['currency'] = strtolower($data['totals']['base_currency_code']);
             $const['payment_method_types'] = ['card'];
             $const['payment_method_options']['card']['installments']['enabled'] = true;
@@ -75,7 +75,9 @@ class Payment extends \Magento\Framework\App\Action\Action
 
             $intent = \Stripe\PaymentIntent::create($const);
 
-            $iniPlans = $intent->payment_method_options->card->installments->available_plans;
+            $intentData = $intent->toArray();
+            $iniPlans = $intentData['payment_method_options']['card']['installments']['available_plans'] ?? [];
+            $iniPlans = $this->normalizePlans($iniPlans);
 
             if(!empty($iniPlans)){
                 $iniPlans = $this->getCoutas($iniPlans);
@@ -105,22 +107,52 @@ class Payment extends \Magento\Framework\App\Action\Action
     }
 
     public function getCoutas($iniPlans) {
-        $enableCoutas = explode(',', $this->stripemx->getCoutas());
+        $enableCoutas = $this->normalizeCoutas();
         foreach($iniPlans as $key => $plan){
-            if(!in_array($plan->count,$enableCoutas)){
+            $planCount = is_object($plan) ? ($plan->count ?? null) : (is_array($plan) ? ($plan['count'] ?? null) : null);
+            if ($planCount === null || !in_array((int) $planCount, $enableCoutas, true)){
                unset($iniPlans[$key]);
             }
         }
         return $iniPlans;
     }
 
+    protected function normalizePlans($iniPlans)
+    {
+        $plans = [];
+
+        foreach ($iniPlans as $plan) {
+            if (!is_array($plan)) {
+                continue;
+            }
+
+            $normalizedPlan = new \stdClass();
+            $normalizedPlan->count = isset($plan['count']) ? (int) $plan['count'] : 0;
+            $normalizedPlan->interval = isset($plan['interval']) ? (string) $plan['interval'] : 'month';
+            $normalizedPlan->type = isset($plan['type']) ? (string) $plan['type'] : 'fixed_count';
+            $plans[] = $normalizedPlan;
+        }
+
+        return $plans;
+    }
+
+    protected function normalizeCoutas()
+    {
+        $enableCoutas = explode(',', (string) $this->stripemx->getCoutas());
+        $enableCoutas = array_map('trim', $enableCoutas);
+        $enableCoutas = array_filter($enableCoutas, function ($value) {
+            return $value !== '';
+        });
+
+        return array_map('intval', array_values($enableCoutas));
+    }
+
     protected function getDemoCoutas()
     {
         $plans = [];
-        $enableCoutas = explode(',', (string) $this->stripemx->getCoutas());
+        $enableCoutas = $this->normalizeCoutas();
 
         foreach ($enableCoutas as $count) {
-            $count = (int) trim($count);
             if ($count <= 0) {
                 continue;
             }
