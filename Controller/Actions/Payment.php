@@ -56,6 +56,7 @@ class Payment extends \Magento\Framework\App\Action\Action
             $const['payment_method'] = $data['payment']['paymentMethod']['id'];
             $const['amount'] = number_format($data['totals']['base_grand_total'], 2, '', '');
             $const['currency'] = strtolower($data['totals']['base_currency_code']);
+            $const['payment_method_types'] = ['card'];
             $const['payment_method_options']['card']['installments']['enabled'] = true;
             $const['metadata']['Envío'] = number_format($data['totals']['shipping_amount'], 2, '.', '');
             $const['metadata']['Impuestos'] = number_format($data['totals']['tax_amount'], 2, '.', '');
