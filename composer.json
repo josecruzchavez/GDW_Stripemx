@@ -26,8 +26,8 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "gdw/core": "^2.0",
-        "php": "^7.2||^8.0",
+        "gdw/core": "^4.0",
+        "php": "^7.4||^8.1",
         "stripe/stripe-php": "^7"
     },
     "autoload": {
