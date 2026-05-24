@@ -78,10 +78,14 @@ class Card extends Cc
             $info->setAdditionalInformation('card', $additionalData['card']);
             $info->setAdditionalInformation('selected_plan', $additionalData['selected_plan']);
             $info->setAdditionalInformation('payment_intent_id', $additionalData['payment_intent_id']);
-            $info->setCcType($card['paymentMethod']['card']['brand']);
-            $info->setCcLast4($card['paymentMethod']['card']['last4']);
-            $info->setCcExpYear($card['paymentMethod']['card']['exp_year']);
-            $info->setCcExpMonth($card['paymentMethod']['card']['exp_month']);
+
+            if (isset($card['paymentMethod']['card'])) {
+                $cardData = $card['paymentMethod']['card'];
+                $info->setAdditionalInformation('cc_type', $cardData['brand'] ?? null);
+                $info->setAdditionalInformation('cc_last4', $cardData['last4'] ?? null);
+                $info->setAdditionalInformation('cc_exp_year', $cardData['exp_year'] ?? null);
+                $info->setAdditionalInformation('cc_exp_month', $cardData['exp_month'] ?? null);
+            }
         }
 
         return $this;
@@ -99,13 +103,13 @@ class Card extends Cc
             \Stripe\Stripe::setApiKey($this->_stripemx->keySecret());  
             $payment_intent = \Stripe\PaymentIntent::retrieve($payment_intent_id);
             $charge = $payment_intent;
-            $availablePlans = isset($payment_intent->payment_method_options->card->installments->available_plans)
-                ? $payment_intent->payment_method_options->card->installments->available_plans
-                : [];
+            $paymentIntentData = $payment_intent->toArray();
+            $availablePlans = $paymentIntentData['payment_method_options']['card']['installments']['available_plans'] ?? [];
             $selectedPlanSupported = false;
 
             foreach ($availablePlans as $availablePlan) {
-                if ((int) $availablePlan->count === (int) $selected_plan) {
+                $availablePlanCount = is_array($availablePlan) ? ($availablePlan['count'] ?? null) : (is_object($availablePlan) ? ($availablePlan->count ?? null) : null);
+                if ((int) $availablePlanCount === (int) $selected_plan) {
                     $selectedPlanSupported = true;
                     break;
                 }
@@ -147,29 +151,33 @@ class Card extends Cc
 
             $this->_stripemx->setLogs('$charge', $charge);
 
-            $firstCharge = isset($charge->charges) && isset($charge->charges->data[0]) ? $charge->charges->data[0] : null;
+            $chargeData = $charge->toArray();
+            $firstCharge = $chargeData['charges']['data'][0] ?? null;
 
-            if ($firstCharge) {
-                $disputed = $firstCharge->disputed == true ? 'Con disputas' : 'Sin disputas';
+            if ($firstCharge !== null) {
+                $disputed = !empty($firstCharge['disputed']) ? 'Con disputas' : 'Sin disputas';
                 $payment->setAdditionalInformation('disputed', $disputed);
 
-                if ($firstCharge->outcome->risk_level ?? null) {
-                    $payment->setAdditionalInformation('risk_level', $firstCharge->outcome->risk_level);
+                if (!empty($firstCharge['outcome']['risk_level'])) {
+                    $payment->setAdditionalInformation('risk_level', $firstCharge['outcome']['risk_level']);
                 }
-                if ($firstCharge->outcome->risk_score ?? null) {
-                    $payment->setAdditionalInformation('risk_score', $firstCharge->outcome->risk_score);
+                if (!empty($firstCharge['outcome']['risk_score'])) {
+                    $payment->setAdditionalInformation('risk_score', $firstCharge['outcome']['risk_score']);
                 }
                 
-                if ($firstCharge->payment_method_details->card->network ?? null) {
-                    $payment->setAdditionalInformation('network', $firstCharge->payment_method_details->card->brand);
+                if (!empty($firstCharge['payment_method_details']['card']['network'])) {
+                    $payment->setAdditionalInformation('network', $firstCharge['payment_method_details']['card']['brand'] ?? null);
                 }
 
-                if ($firstCharge->payment_method_details->card->funding ?? null) {
-                    $payment->setAdditionalInformation('type_card', $firstCharge->payment_method_details->card->funding);
+                if (!empty($firstCharge['payment_method_details']['card']['funding'])) {
+                    $payment->setAdditionalInformation('type_card', $firstCharge['payment_method_details']['card']['funding']);
                 }
             }
             
-            $payment->setTransactionId($charge->id)->setPreparedMessage($message)->setIsTransactionClosed(0);
+            /** @var \Magento\Sales\Model\Order\Payment $payment */
+            $payment->setTransactionId($charge->id);
+            $payment->setAdditionalInformation('prepared_message', $message);
+            $payment->setIsTransactionClosed(false);
 
         } catch (\Throwable $th) {
             $this->_stripemx->setLogs('Error Capture', $th->getMessage());
@@ -185,11 +193,7 @@ class Card extends Cc
 
     public function validate()
     {
-        $errorMsg = false;
-        $info = $this->getInfoInstance();
-        if ($errorMsg) {
-            throw new \Magento\Framework\Exception\LocalizedException($errorMsg);
-        }
+        $this->getInfoInstance();
         return $this;
     }
 
