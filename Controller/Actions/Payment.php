@@ -10,10 +10,10 @@ use \Magento\Framework\Controller\Result\JsonFactory;
 
 class Payment extends \Magento\Framework\App\Action\Action
 {
-    protected $request;
-    protected $stripemx;
-    protected $pageFactory;
-    protected $resultJsonFactory;
+    protected Http $request;
+    protected StripemxCard $stripemx;
+    protected PageFactory $pageFactory;
+    protected JsonFactory $resultJsonFactory;
     protected $resultRedirectFactory;
     
     public function __construct(
@@ -33,7 +33,7 @@ class Payment extends \Magento\Framework\App\Action\Action
         
     }
 
-    public function execute()
+    public function execute(): \Magento\Framework\Controller\ResultInterface
     {
         /* return $this->process(); */
         if ($this->request->isPost()) {
@@ -45,7 +45,7 @@ class Payment extends \Magento\Framework\App\Action\Action
         }
     }
 
-    protected function process()
+    protected function process(): \Magento\Framework\Controller\Result\Json
     {
         $data = $this->request->getParams();
         $resultJson = $this->resultJsonFactory->create();
@@ -92,24 +92,51 @@ class Payment extends \Magento\Framework\App\Action\Action
         }
     }
     
-    public function getDiscount($data){
-        if($data['totals']['base_discount_amount'] != 0){
-            return $data['totals']['base_discount_amount'];
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function getDiscount(array $data): string|false
+    {
+        $totals = $data['totals'] ?? null;
+        if (!is_array($totals)) {
+            return false;
         }
+
+        $baseDiscountAmount = $totals['base_discount_amount'] ?? null;
+        if (is_numeric($baseDiscountAmount) && (float) $baseDiscountAmount != 0.0) {
+            return number_format((float) $baseDiscountAmount, 2, '.', '');
+        }
+
         return false;
     }
 
-    public function getCoupon($data){
-        if(isset($data['totals']['coupon_code'])){
-            return $data['totals']['coupon_code'];
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function getCoupon(array $data): string|false
+    {
+        $totals = $data['totals'] ?? null;
+        if (!is_array($totals)) {
+            return false;
         }
+
+        $couponCode = $totals['coupon_code'] ?? null;
+        if ($couponCode !== null && (is_scalar($couponCode) || (is_object($couponCode) && method_exists($couponCode, '__toString')))) {
+            return (string) $couponCode;
+        }
+
         return false;
     }
 
-    public function getCoutas($iniPlans) {
+    /**
+     * @param array<int, \stdClass|array<string, mixed>> $iniPlans
+     * @return array<int, \stdClass|array<string, mixed>>
+     */
+    public function getCoutas(array $iniPlans): array
+    {
         $enableCoutas = $this->normalizeCoutas();
         foreach($iniPlans as $key => $plan){
-            $planCount = is_object($plan) ? ($plan->count ?? null) : (is_array($plan) ? ($plan['count'] ?? null) : null);
+            $planCount = is_object($plan) ? ($plan->count ?? null) : ($plan['count'] ?? null);
             if ($planCount === null || !in_array((int) $planCount, $enableCoutas, true)){
                unset($iniPlans[$key]);
             }
@@ -117,7 +144,11 @@ class Payment extends \Magento\Framework\App\Action\Action
         return $iniPlans;
     }
 
-    protected function normalizePlans($iniPlans)
+    /**
+     * @param array<int, array<string, mixed>> $iniPlans
+     * @return array<int, \stdClass>
+     */
+    protected function normalizePlans(array $iniPlans): array
     {
         $plans = [];
 
@@ -127,16 +158,23 @@ class Payment extends \Magento\Framework\App\Action\Action
             }
 
             $normalizedPlan = new \stdClass();
-            $normalizedPlan->count = isset($plan['count']) ? (int) $plan['count'] : 0;
-            $normalizedPlan->interval = isset($plan['interval']) ? (string) $plan['interval'] : 'month';
-            $normalizedPlan->type = isset($plan['type']) ? (string) $plan['type'] : 'fixed_count';
+            $count = $plan['count'] ?? null;
+            $interval = $plan['interval'] ?? null;
+            $type = $plan['type'] ?? null;
+
+            $normalizedPlan->count = is_numeric($count) ? (int) $count : 0;
+            $normalizedPlan->interval = (is_scalar($interval) || (is_object($interval) && method_exists($interval, '__toString'))) ? (string) $interval : 'month';
+            $normalizedPlan->type = (is_scalar($type) || (is_object($type) && method_exists($type, '__toString'))) ? (string) $type : 'fixed_count';
             $plans[] = $normalizedPlan;
         }
 
         return $plans;
     }
 
-    protected function normalizeCoutas()
+    /**
+     * @return array<int, int>
+     */
+    protected function normalizeCoutas(): array
     {
         $enableCoutas = explode(',', (string) $this->stripemx->getCoutas());
         $enableCoutas = array_map('trim', $enableCoutas);
@@ -147,7 +185,10 @@ class Payment extends \Magento\Framework\App\Action\Action
         return array_map('intval', array_values($enableCoutas));
     }
 
-    protected function getDemoCoutas()
+    /**
+     * @return array<int, \stdClass>
+     */
+    protected function getDemoCoutas(): array
     {
         $plans = [];
         $enableCoutas = $this->normalizeCoutas();

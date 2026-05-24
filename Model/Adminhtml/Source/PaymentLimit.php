@@ -3,7 +3,10 @@ namespace GDW\Stripemx\Model\Adminhtml\Source;
 
 class PaymentLimit implements \Magento\Framework\Option\ArrayInterface
 {
-    public function toOptionArray()
+    /**
+     * @return array<int, array{value: int, label: \Magento\Framework\Phrase}>
+     */
+    public function toOptionArray(): array
     {
         return [
             ['value' => 3, 'label' => __('3 meses (min. $300.00 MXN)')],

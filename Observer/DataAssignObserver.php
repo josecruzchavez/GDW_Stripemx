@@ -6,6 +6,18 @@ use Magento\Payment\Observer\AbstractDataAssignObserver;
 
 class DataAssignObserver extends AbstractDataAssignObserver
 {
+    private function normalizeAdditionalValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_scalar($value) || (is_object($value) && method_exists($value, '__toString'))) {
+            return (string) $value;
+        }
+
+        return null;
+    }
 
     public function execute(Observer $observer)
     {
@@ -17,21 +29,21 @@ class DataAssignObserver extends AbstractDataAssignObserver
         if ($data->getDataByKey('card') !== null) {
             $paymentInfo->setAdditionalInformation(
                 'card',
-                $data->getData('card')
+                $this->normalizeAdditionalValue($data->getData('card'))
             );
         }
 
         if ($data->getDataByKey('selected_plan') !== null) {
             $paymentInfo->setAdditionalInformation(
                 'selected_plan',
-                $data->getData('selected_plan')
+                $this->normalizeAdditionalValue($data->getData('selected_plan'))
             );
         }
 
         if ($data->getDataByKey('payment_intent_id') !== null) {
             $paymentInfo->setAdditionalInformation(
                 'payment_intent_id',
-                $data->getData('payment_intent_id')
+                $this->normalizeAdditionalValue($data->getData('payment_intent_id'))
             );
         }
     }

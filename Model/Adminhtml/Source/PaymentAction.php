@@ -5,7 +5,10 @@ use Magento\Payment\Model\Method\AbstractMethod;
 
 class PaymentAction implements \Magento\Framework\Option\ArrayInterface
 {
-    public function toOptionArray()
+    /**
+     * @return array<int, array{value: string, label: \Magento\Framework\Phrase}>
+     */
+    public function toOptionArray(): array
     {
         return [
             [

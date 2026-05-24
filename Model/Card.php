@@ -18,17 +18,21 @@ class Card extends Cc
 {
     const CODE = 'gdw_stripemx';
     protected $_code = self::CODE;   
-    protected $_stripemx;
-    protected $_typesCards;
+    protected StripemxCard $_stripemx;
+    protected ?string $_typesCards;
     protected $_scopeConfig;
-    protected $_countryFactory;
+    protected CountryFactory $_countryFactory;
     protected $_canRefund = true;
     protected $_isGateway = true;
     protected $_canCapture = true;
     protected $_canCapturePartial = true;   
     protected $_canRefundInvoicePartial = true;
+    /** @var array<int, string> */
     protected $_supportedCurrencyCodes = ["MXN"];
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(
         Context $context,
         Registry $registry,
@@ -60,10 +64,12 @@ class Card extends Cc
         $this->_stripemx = $_stripemx;
         $this->_scopeConfig = $scopeConfig;
         $this->_countryFactory = $countryFactory;
-        $this->_typesCards = $this->getConfigData('cctypes');    
+        $typesCards = $this->getConfigData('cctypes');
+        $this->_typesCards = (is_scalar($typesCards) || (is_object($typesCards) && method_exists($typesCards, '__toString'))) ? (string) $typesCards : null;
     }
 
-    public function assignData(\Magento\Framework\DataObject $data) {
+    public function assignData(\Magento\Framework\DataObject $data): self
+    {
 
         parent::assignData($data);
 
@@ -73,7 +79,10 @@ class Card extends Cc
 
         if (key_exists('additional_data', $content)) {
             $additionalData = $content['additional_data'];
-            $card = json_decode($additionalData['card'], true);
+            $card = json_decode((string) ($additionalData['card'] ?? ''), true);
+            if (!is_array($card)) {
+                $card = [];
+            }
             $this->_stripemx->setLogs('additionalData', $additionalData);
             $info->setAdditionalInformation('card', $additionalData['card']);
             $info->setAdditionalInformation('selected_plan', $additionalData['selected_plan']);
@@ -81,22 +90,24 @@ class Card extends Cc
 
             if (isset($card['paymentMethod']['card'])) {
                 $cardData = $card['paymentMethod']['card'];
-                $info->setAdditionalInformation('cc_type', $cardData['brand'] ?? null);
-                $info->setAdditionalInformation('cc_last4', $cardData['last4'] ?? null);
-                $info->setAdditionalInformation('cc_exp_year', $cardData['exp_year'] ?? null);
-                $info->setAdditionalInformation('cc_exp_month', $cardData['exp_month'] ?? null);
+                $info->setAdditionalInformation('cc_type', isset($cardData['brand']) ? (string) $cardData['brand'] : null);
+                $info->setAdditionalInformation('cc_last4', isset($cardData['last4']) ? (string) $cardData['last4'] : null);
+                $info->setAdditionalInformation('cc_exp_year', isset($cardData['exp_year']) ? (string) $cardData['exp_year'] : null);
+                $info->setAdditionalInformation('cc_exp_month', isset($cardData['exp_month']) ? (string) $cardData['exp_month'] : null);
             }
         }
 
         return $this;
     }
 
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount): self
     {
         $message = '';
         $info = $this->getInfoInstance();
-        $payment_intent_id = $info->getAdditionalInformation('payment_intent_id');
-        $selected_plan = $info->getAdditionalInformation('selected_plan');
+        $paymentIntentIdRaw = $info->getAdditionalInformation('payment_intent_id');
+        $payment_intent_id = (is_scalar($paymentIntentIdRaw) || (is_object($paymentIntentIdRaw) && method_exists($paymentIntentIdRaw, '__toString'))) ? (string) $paymentIntentIdRaw : '';
+        $selectedPlanRaw = $info->getAdditionalInformation('selected_plan');
+        $selected_plan = is_numeric($selectedPlanRaw) ? (int) $selectedPlanRaw : 0;
 
         
         try {
@@ -109,14 +120,15 @@ class Card extends Cc
 
             foreach ($availablePlans as $availablePlan) {
                 $availablePlanCount = is_array($availablePlan) ? ($availablePlan['count'] ?? null) : (is_object($availablePlan) ? ($availablePlan->count ?? null) : null);
-                if ((int) $availablePlanCount === (int) $selected_plan) {
+                $availablePlanCount = is_numeric($availablePlanCount) ? (int) $availablePlanCount : null;
+                if ($availablePlanCount !== null && $availablePlanCount === $selected_plan) {
                     $selectedPlanSupported = true;
                     break;
                 }
             }
 
             if ($payment_intent->status !== 'succeeded') {
-                if($selected_plan == 0){
+                if($selected_plan === 0){
                     $charge = $payment_intent->confirm();
                     $message = 'Cargo único | ';
                 }elseif ($selectedPlanSupported) {
@@ -139,7 +151,7 @@ class Card extends Cc
                     $message = $selected_plan.' Meses sin intereses | ';
                 }
             } else {
-                $message = $selected_plan == 0 ? 'Cargo único | ' : $selected_plan.' Meses sin intereses | ';
+                $message = $selected_plan === 0 ? 'Cargo único | ' : $selected_plan.' Meses sin intereses | ';
             }
 
             if($charge->status != 'succeeded'){
@@ -191,14 +203,14 @@ class Card extends Cc
         return $this;
     }
 
-    public function validate()
+    public function validate(): self
     {
         $this->getInfoInstance();
         return $this;
     }
 
 
-    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
+    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null): bool
     {
         /* Check Key's */
         if (empty($this->_stripemx->keyPublic()) || empty($this->_stripemx->keySecret())) {
@@ -209,7 +221,7 @@ class Card extends Cc
         return parent::isAvailable($quote);
     }
 
-    public function canUseForCurrency($currencyCode)
+    public function canUseForCurrency($currencyCode): bool
     {
         if (!in_array($currencyCode, $this->_supportedCurrencyCodes)) {
             $this->_stripemx->setLogs('error Currency','Stripemx only enable in MXN currency');

@@ -5,7 +5,7 @@ use Magento\Framework\View\Element\Template\Context;
 
 class CustomHeader extends \Magento\Framework\View\Element\Template
 {
-    protected $_stripemx;
+  protected StripemxCard $_stripemx;
     
     public function __construct(StripemxCard $_stripemx, Context $context)
     {
@@ -13,12 +13,12 @@ class CustomHeader extends \Magento\Framework\View\Element\Template
       parent::__construct($context);
     }
 
-    public function enableStripemx()
+    public function enableStripemx(): bool
     {
       return $this->_stripemx->enable();
     }
 
-    public function getCustomScript()
+    public function getCustomScript(): ?string
     {
       return $this->_stripemx->getStripeScript();
     }

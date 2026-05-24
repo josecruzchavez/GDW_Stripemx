@@ -11,15 +11,16 @@ class ConfigProvider implements ConfigProviderInterface
 {
     const CODE = 'gdw_stripemx';
 
-    protected $_ccoptions = [
+    /** @var array<string, string> */
+    protected array $_ccoptions = [
         'visa' => 'Visa',
         'amex' => 'American Express',
         'mastercard' => 'Mastercard'
     ];
 
-    protected $ccConfig;
-    protected $stripemx;
-    protected $assetSource;
+    protected CcConfig $ccConfig;
+    protected StripemxCard $stripemx;
+    protected Source $assetSource;
 
     public function __construct(
         CcConfig $ccConfig,
@@ -31,7 +32,10 @@ class ConfigProvider implements ConfigProviderInterface
         $this->assetSource = $assetSource;
     }
 
-    public function getConfig()
+    /**
+     * @return array<string, mixed>
+     */
+    public function getConfig(): array
     {
         return [
             'payment' => [
@@ -51,12 +55,18 @@ class ConfigProvider implements ConfigProviderInterface
         ];
     }
 
-    protected function getCcAvailableTypes()
+    /**
+     * @return array<string, string>
+     */
+    protected function getCcAvailableTypes(): array
     {
         return $this->_ccoptions;
     }
 
-    private function _getMonths()
+    /**
+     * @return array<int, string>
+     */
+    private function _getMonths(): array
     {
         return [
             "1" => "01 - Enero",
@@ -74,27 +84,33 @@ class ConfigProvider implements ConfigProviderInterface
         ];
     }
 
-    private function _getYears()
+    /**
+     * @return array<int, string>
+     */
+    private function _getYears(): array
     {
         $years = [];
         $cYear = (integer) date("Y");
         $cYear = $cYear - 1;
         for ($i = 1; $i <= 12; $i++) {
-            $year = (string) ($cYear + $i);
-            $years[$year] = $year;
+            $year = $cYear + $i;
+            $years[$year] = (string) $year;
         }
 
         return $years;
     }
 
-    private function _getStartYears()
+    /**
+     * @return array<int, string>
+     */
+    private function _getStartYears(): array
     {
         $years = [];
         $cYear = (integer) date("Y");
 
         for ($i = 5; $i >= 0; $i--) {
-            $year = (string) ($cYear - $i);
-            $years[$year] = $year;
+            $year = $cYear - $i;
+            $years[$year] = (string) $year;
         }
 
         return $years;
