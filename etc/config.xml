@@ -6,6 +6,7 @@
                 <debug>0</debug>
                 <active>0</active>
                 <model>GDW\Stripemx\Model\Card</model>
+                <info_block_type>GDW\Stripemx\Block\Info</info_block_type>
                 <payment_action>authorize_capture</payment_action>
                 <title>Realiza tu pago con Stripe MSI</title>
                 <currency>MXN</currency>

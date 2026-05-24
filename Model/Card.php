@@ -108,6 +108,7 @@ class Card extends Cc
         $payment_intent_id = (is_scalar($paymentIntentIdRaw) || (is_object($paymentIntentIdRaw) && method_exists($paymentIntentIdRaw, '__toString'))) ? (string) $paymentIntentIdRaw : '';
         $selectedPlanRaw = $info->getAdditionalInformation('selected_plan');
         $selected_plan = is_numeric($selectedPlanRaw) ? (int) $selectedPlanRaw : 0;
+        $selectedPlanFinal = $selected_plan;
 
         
         try {
@@ -165,8 +166,13 @@ class Card extends Cc
 
             $chargeData = $charge->toArray();
             $firstCharge = $chargeData['charges']['data'][0] ?? null;
+            $selectedPlanFromStripe = $chargeData['payment_method_options']['card']['installments']['plan']['count'] ?? null;
 
             if ($firstCharge !== null) {
+                if (isset($firstCharge['payment_method_details']['card']['installments']['plan']['count'])) {
+                    $selectedPlanFromStripe = $firstCharge['payment_method_details']['card']['installments']['plan']['count'];
+                }
+
                 $disputed = !empty($firstCharge['disputed']) ? 'Con disputas' : 'Sin disputas';
                 $payment->setAdditionalInformation('disputed', $disputed);
 
@@ -184,10 +190,26 @@ class Card extends Cc
                 if (!empty($firstCharge['payment_method_details']['card']['funding'])) {
                     $payment->setAdditionalInformation('type_card', $firstCharge['payment_method_details']['card']['funding']);
                 }
+
+                if (!empty($firstCharge['payment_method_details']['card']['brand'])) {
+                    $payment->setAdditionalInformation('cc_type', (string) $firstCharge['payment_method_details']['card']['brand']);
+                }
+
+                if (!empty($firstCharge['payment_method_details']['card']['last4'])) {
+                    $payment->setAdditionalInformation('cc_last4', (string) $firstCharge['payment_method_details']['card']['last4']);
+                }
             }
+
+            if (is_numeric($selectedPlanFromStripe)) {
+                $selectedPlanFinal = (int) $selectedPlanFromStripe;
+            }
+
+            $message = $selectedPlanFinal === 0 ? 'Cargo único | ' : $selectedPlanFinal . ' Meses sin intereses | ';
+            $payment->setAdditionalInformation('selected_plan', (string) $selectedPlanFinal);
             
             /** @var \Magento\Sales\Model\Order\Payment $payment */
             $payment->setTransactionId($charge->id);
+            $payment->setPreparedMessage($message);
             $payment->setAdditionalInformation('prepared_message', $message);
             $payment->setIsTransactionClosed(false);
 
