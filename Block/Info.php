@@ -15,10 +15,6 @@ class Info extends Cc
         $transport = parent::_prepareSpecificInformation($transport);
         $info = $this->getInfo();
 
-        if (!$info) {
-            return $transport;
-        }
-
         $details = [];
 
         $selectedPlan = $info->getAdditionalInformation('selected_plan');
@@ -62,7 +58,9 @@ class Info extends Cc
         }
 
         if (!empty($details)) {
-            $transport->setData(array_merge($transport->getData(), $details));
+            $currentData = $transport->getData();
+            $currentData = is_array($currentData) ? $currentData : [];
+            $transport->setData(array_merge($currentData, $details));
         }
 
         return $transport;

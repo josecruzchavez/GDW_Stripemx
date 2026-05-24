@@ -209,7 +209,7 @@ class Card extends Cc
             
             /** @var \Magento\Sales\Model\Order\Payment $payment */
             $payment->setTransactionId($charge->id);
-            $payment->setPreparedMessage($message);
+            $payment->setData('prepared_message', $message);
             $payment->setAdditionalInformation('prepared_message', $message);
             $payment->setIsTransactionClosed(false);
 
