@@ -98,25 +98,44 @@ class Card extends Cc
         try {
             \Stripe\Stripe::setApiKey($this->_stripemx->keySecret());  
             $payment_intent = \Stripe\PaymentIntent::retrieve($payment_intent_id);
-            
-            if($selected_plan == 0){
-                $charge = $payment_intent->confirm();
-                $message = 'Cargo único | ';
-            }else{
-                $data = ['payment_method_options' => [
-                    'card' => [
-                        'installments' => [
-                            'plan' => [
-                                'count' => $selected_plan,
-                                'interval' => 'month',
-                                'type' => 'fixed_count'
+            $charge = $payment_intent;
+            $availablePlans = isset($payment_intent->payment_method_options->card->installments->available_plans)
+                ? $payment_intent->payment_method_options->card->installments->available_plans
+                : [];
+            $selectedPlanSupported = false;
+
+            foreach ($availablePlans as $availablePlan) {
+                if ((int) $availablePlan->count === (int) $selected_plan) {
+                    $selectedPlanSupported = true;
+                    break;
+                }
+            }
+
+            if ($payment_intent->status !== 'succeeded') {
+                if($selected_plan == 0){
+                    $charge = $payment_intent->confirm();
+                    $message = 'Cargo único | ';
+                }elseif ($selectedPlanSupported) {
+                    $data = ['payment_method_options' => [
+                        'card' => [
+                            'installments' => [
+                                'plan' => [
+                                    'count' => $selected_plan,
+                                    'interval' => 'month',
+                                    'type' => 'fixed_count'
+                                    ]
                                 ]
                             ]
                         ]
-                    ]
-                ]; 
-                $charge = $payment_intent->confirm($data);
-                $message = $selected_plan.' Meses sin intereses | ';
+                    ]; 
+                    $charge = $payment_intent->confirm($data);
+                    $message = $selected_plan.' Meses sin intereses | ';
+                } else {
+                    $charge = $payment_intent->confirm();
+                    $message = $selected_plan.' Meses sin intereses | ';
+                }
+            } else {
+                $message = $selected_plan == 0 ? 'Cargo único | ' : $selected_plan.' Meses sin intereses | ';
             }
 
             if($charge->status != 'succeeded'){
@@ -128,22 +147,26 @@ class Card extends Cc
 
             $this->_stripemx->setLogs('$charge', $charge);
 
-            $disputed = $charge->charges->data[0]->disputed == true ? 'Con disputas' : 'Sin disputas';
-            $payment->setAdditionalInformation('disputed', $disputed);
+            $firstCharge = isset($charge->charges) && isset($charge->charges->data[0]) ? $charge->charges->data[0] : null;
 
-            if($charge->charges->data[0]->outcome->risk_level){
-                $payment->setAdditionalInformation('risk_level', $charge->charges->data[0]->outcome->risk_level);
-            }
-            if($charge->charges->data[0]->outcome->risk_score){
-                $payment->setAdditionalInformation('risk_score', $charge->charges->data[0]->outcome->risk_score);
-            }
-            
-            if($charge->charges->data[0]->payment_method_details->card->network){
-                $payment->setAdditionalInformation('network', $charge->charges->data[0]->payment_method_details->card->brand);
-            }
+            if ($firstCharge) {
+                $disputed = $firstCharge->disputed == true ? 'Con disputas' : 'Sin disputas';
+                $payment->setAdditionalInformation('disputed', $disputed);
 
-            if($charge->charges->data[0]->payment_method_details->card->funding){
-                $payment->setAdditionalInformation('type_card', $charge->charges->data[0]->payment_method_details->card->funding);
+                if ($firstCharge->outcome->risk_level ?? null) {
+                    $payment->setAdditionalInformation('risk_level', $firstCharge->outcome->risk_level);
+                }
+                if ($firstCharge->outcome->risk_score ?? null) {
+                    $payment->setAdditionalInformation('risk_score', $firstCharge->outcome->risk_score);
+                }
+                
+                if ($firstCharge->payment_method_details->card->network ?? null) {
+                    $payment->setAdditionalInformation('network', $firstCharge->payment_method_details->card->brand);
+                }
+
+                if ($firstCharge->payment_method_details->card->funding ?? null) {
+                    $payment->setAdditionalInformation('type_card', $firstCharge->payment_method_details->card->funding);
+                }
             }
             
             $payment->setTransactionId($charge->id)->setPreparedMessage($message)->setIsTransactionClosed(0);
