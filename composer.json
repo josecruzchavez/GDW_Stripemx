@@ -2,7 +2,7 @@
     "name": "gdw/stripemx",
     "description": "Metodo de pago online para Magento 2",
     "type": "magento2-module",
-    "version": "4.4.1",
+    "version": "4.4.2",
     "license": "proprietary",
     "authors": [
         {

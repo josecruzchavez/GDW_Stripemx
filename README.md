@@ -10,7 +10,7 @@ El módulo GDW_Stripemx para Magento 2 permite realizar cobros a meses in intere
 GDW_stripemx fue pensado para realizar el cobro de forma inmediata (capture and sale), antes de terminar el proceso de compra, se realizará una petición a stripe para verificar si la tarjeta de crédito puede aceptar pagos a meses sin intereses, si la tarjeta lo permite, se mostrará un selectbox para que el cliente elija la opción que más le convenga, hasta 24 MSI.
 
 ## Compatibilidad
-- Rama 4.4.x: Magento 2.4.4+ con PHP 8.1 a 8.3
+- Rama 4.4.x: Magento 2.4.4+ con PHP 8.1+
 - Rama 4.x: Magento 2.4.0 a 2.4.3 con PHP 7.4
 - Rama 3.x: Magento 2.3.x con PHP 7.4
 
